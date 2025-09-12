@@ -9,7 +9,7 @@ app.use(express.json());
 // Lê as variáveis de ambiente do Railway
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 // Rota para listar todas as sieges
