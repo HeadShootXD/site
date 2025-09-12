@@ -1,4 +1,12 @@
 {
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "Backend simples para conectar ao Supabase",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4",
     "cors": "^2.8.5",
