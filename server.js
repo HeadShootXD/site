@@ -102,17 +102,6 @@ app.get("/sieges/:id/stats", async (req, res) => {
   try {
     const siegeId = req.params.id;
 
-    // Verificar se a siege existe
-    const { data: siege, error: siegeError } = await supabase
-      .from("sieges")
-      .select("id")
-      .eq("id", siegeId)
-      .single();
-
-    if (siegeError || !siege) {
-      return res.status(404).json({ error: "Siege não encontrada" });
-    }
-
     // Buscar estatísticas dos jogadores
     const { data: playerStats, error: statsError } = await supabase
       .from("siege_player_stats")
@@ -124,19 +113,22 @@ app.get("/sieges/:id/stats", async (req, res) => {
       return res.status(404).json({ error: "Nenhuma estatística encontrada para esta siege" });
     }
 
-    // Buscar kills por vida
+    // Extrair IDs dos player stats
+    const statIds = playerStats.map(stat => stat.id);
+
+    // Buscar kills por vida usando siege_player_stat_id
     const { data: killsByLife, error: killsError } = await supabase
       .from("siege_player_kills")
       .select("siege_player_stat_id, life_number, victim_name, points_earned")
-      .eq("siege_id", siegeId);
+      .in("siege_player_stat_id", statIds);
 
     if (killsError) throw killsError;
 
-    // Buscar mortes por vida
+    // Buscar mortes por vida usando siege_player_stat_id
     const { data: deathsByLife, error: deathsError } = await supabase
       .from("siege_player_deaths")
       .select("siege_player_stat_id, life_number, killer_name")
-      .eq("siege_id", siegeId);
+      .in("siege_player_stat_id", statIds);
 
     if (deathsError) throw deathsError;
 
