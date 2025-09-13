@@ -14,16 +14,48 @@ const supabase = createClient(
 
 // ---------------- Rotas ----------------
 
-// Lista todas as sieges
+// Lista todas as sieges, enriquecidas com topGuild e MVP
 app.get("/sieges", async (req, res) => {
   try {
-    const { data, error } = await supabase
+    // Buscar todas as sieges
+    const { data: sieges, error: siegeError } = await supabase
       .from("sieges")
       .select("*")
       .order("date", { ascending: false });
 
-    if (error) throw error;
-    res.json(data);
+    if (siegeError) throw siegeError;
+
+    // Enriquecer cada siege com topGuild e MVP em paralelo
+    const enrichedSieges = await Promise.all(
+      sieges.map(async (siege) => {
+        // Buscar guild campeã
+        const { data: guildData, error: guildError } = await supabase
+          .from("siege_guild_rankings")
+          .select("guild_name, score")
+          .eq("siege_id", siege.id)
+          .order("score", { ascending: false })
+          .limit(1);
+
+        // Buscar MVP
+        const { data: playerData, error: playerError } = await supabase
+          .from("siege_player_rankings")
+          .select("player_name, score")
+          .eq("siege_id", siege.id)
+          .order("score", { ascending: false })
+          .limit(1);
+
+        if (guildError) console.warn(`Erro ao buscar topGuild para siege ${siege.id}:`, guildError);
+        if (playerError) console.warn(`Erro ao buscar MVP para siege ${siege.id}:`, playerError);
+
+        return {
+          ...siege,
+          topGuild: guildData && guildData.length > 0 ? guildData[0].guild_name : "—",
+          mvp: playerData && playerData.length > 0 ? playerData[0].player_name : "—",
+        };
+      })
+    );
+
+    res.json(enrichedSieges);
   } catch (err) {
     console.error("Erro ao buscar sieges:", err.message);
     res.status(500).json({ error: "Erro ao buscar sieges" });
@@ -55,7 +87,7 @@ app.get("/sieges/:id/rankings", async (req, res) => {
   }
 });
 
-// Guild campeã de uma siege
+// Guild campeã de uma siege (mantido para compatibilidade, mas agora desnecessário com /sieges enriquecido)
 app.get("/sieges/:id/topGuild", async (req, res) => {
   try {
     const siegeId = req.params.id;
@@ -76,7 +108,7 @@ app.get("/sieges/:id/topGuild", async (req, res) => {
   }
 });
 
-// MVP (player destaque) de uma siege
+// MVP (player destaque) de uma siege (mantido para compatibilidade, mas agora desnecessário com /sieges enriquecido)
 app.get("/sieges/:id/mvp", async (req, res) => {
   try {
     const siegeId = req.params.id;
