@@ -6,10 +6,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Conecta no Supabase usando variáveis de ambiente do Railway
+// Conecta no Supabase com variáveis do Railway
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 // ---------------- Rotas ----------------
@@ -82,7 +82,7 @@ app.get("/sieges/:id/topGuild", async (req, res) => {
   }
 });
 
-// MVP de uma siege
+// MVP (player destaque) de uma siege
 app.get("/sieges/:id/mvp", async (req, res) => {
   try {
     const siegeId = req.params.id;
